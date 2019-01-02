@@ -35,7 +35,7 @@ public class ReadFile implements Serializable {
     static String postingPath;
     static boolean toStem;
     private HashSet<String> languages;
-    private HashMap<String,City> cities;
+    private HashMap<String, City> cities;
 
     /**
      * Constructor- initialize the fields and call the initial methods
@@ -191,7 +191,7 @@ public class ReadFile implements Serializable {
      *
      * @throws IOException
      */
-    public void ReadJsoup() throws Exception  {
+    public void ReadJsoup() throws Exception {
         p.insertStopWords(corpusPath + "\\stop_words.txt");
         String folderName;
         //create a new folder for stemming/not stemming
@@ -214,13 +214,13 @@ public class ReadFile implements Serializable {
 
         File resource = new File(corpusPath);
         File[] Directories = resource.listFiles();
-            for (File dir : Directories) {
-                if (dir.getName().equals("stop_words.txt"))
-                    continue;
-                files = dir.listFiles();
-            }
+        for (File dir : Directories) {
+            if (dir.getName().equals("stop_words.txt"))
+                continue;
+            files = dir.listFiles();
+
             for (File f : files) {
-                System.out.println("file name: "+f.getName());
+
                 ReadFile.countFiles++;
                 Document doc = null;
                 try {
@@ -236,31 +236,24 @@ public class ReadFile implements Serializable {
                 for (Element element : docs) {
                     text = element.select("TEXT").text();
                     serial = element.select("DOCNO").text();
-//                    if(serial.equals("FBIS3-14832")){
-//                        System.out.println("FBIS3-14832 fileName= "+f.getName());
-//                        return;
-//                    }
                     text = replaceFromMap(text, this.replacements);
                     Docs curerntDoc = new Docs(serial, city, element.select("DATE1").text());
-                    /////////////////////checkk
-                    if (debug.contains(curerntDoc.getDocNo()))
-                        System.out.println("docNum: "+curerntDoc.getDocNo()+"  fileName: "+f.getName());
+
                     String header = element.select("TI").text();
                     String headline = element.select("HEADLINE").text();
-                    if (headline!= null && header!=null){
-                        if (headline.length() >= header.length()){
+                    if (headline != null && header != null) {
+                        if (headline.length() >= header.length()) {
                             curerntDoc.setHeader(headline);
-                        }
-                        else{
+                        } else {
                             curerntDoc.setHeader(header);
                         }
                     }
 
                     String findTheCity = findCity(element.outerHtml());
                     for (int i = 0; i < findTheCity.length(); i++) {
-                        if (Character.isDigit(findTheCity.charAt(i)) || findTheCity.length()<2 ||
-                                findTheCity.equals("THE")|| findTheCity.equals("The")|| findTheCity.equals("by")
-                                || findTheCity.equals("FOR")|| findTheCity.equals("--FOR")|| findTheCity.equals("--")) {
+                        if (Character.isDigit(findTheCity.charAt(i)) || findTheCity.length() < 2 ||
+                                findTheCity.equals("THE") || findTheCity.equals("The") || findTheCity.equals("by")
+                                || findTheCity.equals("FOR") || findTheCity.equals("--FOR") || findTheCity.equals("--")) {
                             findTheCity = null;
                             break;
                         }
@@ -284,8 +277,8 @@ public class ReadFile implements Serializable {
 
                     curerntDoc.setLanguage(findTheLanguage);
 
-                    curerntDoc.setHeader(p.parser(curerntDoc, curerntDoc.getHeader(), toStem,false,true));
-                    p.parser(curerntDoc, text, toStem,false,false);
+                    curerntDoc.setHeader(p.parser(curerntDoc, curerntDoc.getHeader(), toStem, false, true));
+                    p.parser(curerntDoc, text, toStem, false, false);
 
 
                     indexer.add(p.getTempDictionary(), curerntDoc, ReadFile.countFiles, postingPath, toStem);
@@ -294,63 +287,50 @@ public class ReadFile implements Serializable {
                 }
 
 
-
+            }
+        }
+            try {
+                indexer.merge();
+                indexer.writeTheDictionary();
+            } catch (Exception e) {
             }
 
-        try {
-            indexer.merge();
-            indexer.writeTheDictionary();
-        } catch (Exception e) {
+
+
+            //write the Dictionary as object
+            File toWriteSortedAsObject = new File(postingPath + "\\" + "SortedAsObject.txt");
+            ObjectOutputStream oos = null;
+            try {
+                oos = new ObjectOutputStream(new FileOutputStream(toWriteSortedAsObject));
+            } catch (IOException e) {
+            }
+            try {
+                oos.writeObject(indexer.getSorted());
+                oos.close();
+            } catch (Exception e) {
+            }
+
+            //write the next as object
+            writeDocumentsAsObject();
+            writeTermsInHeaderAsObject();
+            writeDicToShowAsObject();
+            writeCitiesAsObject();
+            writeLanguagesAsObject();
+
+
+            citiesIndexer.APIConnection();
+            try {
+                citiesIndexer.mergeTheCities(p.getCities());
+            } catch (Exception e) {
+            }
+
+            //delete temporary files
+            indexer.deleteTemporaryFiles(postingPath);
+
+            //create docs posting
+            createDocsPosting(indexer.getDocsHashMap());
+
         }
-
-
-        //write the Dictionary as object
-        File toWriteSortedAsObject = new File(postingPath + "\\" + "SortedAsObject.txt");
-        ObjectOutputStream oos = null;
-        try {
-            oos = new ObjectOutputStream(new FileOutputStream(toWriteSortedAsObject));
-        } catch (IOException e) {
-        }
-        try {
-            oos.writeObject(indexer.getSorted());
-            oos.close();
-        } catch (Exception e) {
-        }
-
-        //write the next as object
-        writeDocumentsAsObject();
-        writeTermsInHeaderAsObject();
-        writeDicToShowAsObject();
-        writeCitiesAsObject();
-        writeLanguagesAsObject();
-
-        //write the Documents as object
-//        File toWriteDocsObject = new File(postingPath + "\\" + "DocsAsObject.txt");
-//        ObjectOutputStream oos1 = null;
-//        try {
-//            oos1 = new ObjectOutputStream(new FileOutputStream(toWriteDocsObject));
-//        } catch (IOException e) {
-//        }
-//        try {
-//            oos1.writeObject(indexer.getDocsHashMap());
-//            oos1.close();
-//        } catch (Exception e) {
-//        }
-
-
-        citiesIndexer.APIConnection();
-        try {
-            citiesIndexer.mergeTheCities(p.getCities());
-        } catch (Exception e) {
-        }
-
-        //delete temporary files
-        indexer.deleteTemporaryFiles(postingPath);
-
-        //create docs posting
-        createDocsPosting(indexer.getDocsHashMap());
-
-    }
 
     private void writeLanguagesAsObject() {
 
@@ -390,8 +370,9 @@ public class ReadFile implements Serializable {
         FileUtils.writeByteArrayToFile(new File(postingPath + "\\" + "DocsAsObject.txt"), encode);
 
 
-       // byte[] input = SerializationUtils
+        // byte[] input = SerializationUtils
     }
+
     private void writeTermsInHeaderAsObject() throws IOException {
 
         byte[] input = SerializationUtils.serialize(Parse.getTermsInHeaderToDoc());
@@ -471,7 +452,7 @@ public class ReadFile implements Serializable {
      * @param docs
      * @throws IOException
      */
-    private void createDocsPosting(HashMap<String,Docs> docs) throws Exception {
+    private void createDocsPosting(HashMap<String, Docs> docs) throws Exception {
         String dirPath = indexer.getPathDir();
         File f = new File(dirPath + "\\" + "DocsPosting.txt");
         FileOutputStream fos = null;
@@ -492,18 +473,17 @@ public class ReadFile implements Serializable {
             StringBuilder FiveMostFreqEssences = new StringBuilder("");
 
             PriorityQueue<TermsPerDoc> newDocQueue = new PriorityQueue<>();
-            while(!docQueue.isEmpty()){
+            while (!docQueue.isEmpty()) {
                 TermsPerDoc current = docQueue.poll();
                 newDocQueue.add(current);
-                FiveMostFreqEssences.append(current.getValue()+"-"+current.getTf()+", ");
+                FiveMostFreqEssences.append(current.getValue() + "-" + current.getTf() + ", ");
             }
             nextDoc.setMostFiveFrequencyEssences(newDocQueue);
 
 
-
             if ((nextDoc.getCity() == null || nextDoc.getCity().equals("")) && (nextDoc.getDate() != null || nextDoc.getDate().equals(""))) {
-                text.append(nextDoc.getDocNo() + ": DocLength="+nextDoc.getDocLength() + " maxtf=" + nextDoc.getMaxft() + ", uniqueWords=" +
-                        nextDoc.getUniqueWords() + ", date:" + nextDoc.getDate()+", FiveMostFreqEssences:"+FiveMostFreqEssences);
+                text.append(nextDoc.getDocNo() + ": DocLength=" + nextDoc.getDocLength() + " maxtf=" + nextDoc.getMaxft() + ", uniqueWords=" +
+                        nextDoc.getUniqueWords() + ", date:" + nextDoc.getDate() + ", FiveMostFreqEssences:" + FiveMostFreqEssences);
                 text.append(System.lineSeparator());
                 try {
                     w.write(text.toString());
@@ -515,8 +495,8 @@ public class ReadFile implements Serializable {
 
             }
             if ((nextDoc.getCity() == null || nextDoc.getCity().equals("")) && (nextDoc.getDate().equals("") || nextDoc.getDate() == null)) {
-                text.append(nextDoc.getDocNo() + ": DocLength="+nextDoc.getDocLength() + " maxtf=" + nextDoc.getMaxft() + ", uniqueWords=" +
-                        nextDoc.getUniqueWords()+", FiveMostFreqEssences:"+FiveMostFreqEssences);
+                text.append(nextDoc.getDocNo() + ": DocLength=" + nextDoc.getDocLength() + " maxtf=" + nextDoc.getMaxft() + ", uniqueWords=" +
+                        nextDoc.getUniqueWords() + ", FiveMostFreqEssences:" + FiveMostFreqEssences);
                 text.append(System.lineSeparator());
                 try {
                     w.write(text.toString());
@@ -528,8 +508,8 @@ public class ReadFile implements Serializable {
 
             }
             if ((nextDoc.getCity() != null || !nextDoc.getCity().equals("")) && (!nextDoc.getDate().equals("") || nextDoc.getDate() != null)) {
-                text.append(nextDoc.getDocNo() + ": DocLength="+nextDoc.getDocLength() + " maxtf=" + nextDoc.getMaxft() + ", uniqueWords=" +
-                        nextDoc.getUniqueWords() + ", city=" + nextDoc.getCity() + ", date:" + nextDoc.getDate()+", FiveMostFreqEssences:"+FiveMostFreqEssences);
+                text.append(nextDoc.getDocNo() + ": DocLength=" + nextDoc.getDocLength() + " maxtf=" + nextDoc.getMaxft() + ", uniqueWords=" +
+                        nextDoc.getUniqueWords() + ", city=" + nextDoc.getCity() + ", date:" + nextDoc.getDate() + ", FiveMostFreqEssences:" + FiveMostFreqEssences);
                 text.append(System.lineSeparator());
                 try {
                     w.write(text.toString());
@@ -540,8 +520,8 @@ public class ReadFile implements Serializable {
                 continue;
             }
             if ((nextDoc.getCity() != null || !nextDoc.getCity().equals("")) && nextDoc.getDate() == null || nextDoc.getDate().equals("")) {
-                text.append(nextDoc.getDocNo() + ": DocLength="+nextDoc.getDocLength() + " maxtf=" + nextDoc.getMaxft() + ", uniqueWords=" +
-                        nextDoc.getUniqueWords() + ", city=" + nextDoc.getCity()+", FiveMostFreqEssences:"+FiveMostFreqEssences);
+                text.append(nextDoc.getDocNo() + ": DocLength=" + nextDoc.getDocLength() + " maxtf=" + nextDoc.getMaxft() + ", uniqueWords=" +
+                        nextDoc.getUniqueWords() + ", city=" + nextDoc.getCity() + ", FiveMostFreqEssences:" + FiveMostFreqEssences);
                 text.append(System.lineSeparator());
                 try {
                     w.write(text.toString());
@@ -606,7 +586,6 @@ public class ReadFile implements Serializable {
 
         return "";
     }
-
 
 
 }

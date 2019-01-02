@@ -28,7 +28,7 @@ public class Searcher {
     static HashMap<String, QueryDoc> docRelevantForTheQuery;
     PriorityQueue<QueryDoc> RankedQueryDocs;
     private ArrayList<String> QueryResults;
-    //private ArrayList<String> QueryResultsForFile;
+    private ArrayList<String> QueryResultsForFile;
     HashSet<String> citiesFromFilter; //hashSet for cities if the user chose filter by city
     static double avdl;
     static int numOfDocumentsInCorpus;
@@ -42,7 +42,7 @@ public class Searcher {
         docRelevantForTheQuery = new HashMap<String, QueryDoc>();
         QueryResults = new ArrayList<>();
         QueryIDandResultsForFile = new TreeMap<>();
-        //QueryResultsForFile = new ArrayList<>();
+        QueryResultsForFile = new ArrayList<>();
         RankedQueryDocs = new PriorityQueue();
         ranker = new Ranker();
         //numOfDocumentsInCorpus = Documents.size();
@@ -74,6 +74,22 @@ public class Searcher {
      */
     public void setQueryIDandResultsForFile(TreeMap<String, ArrayList<String>> queryIDandResultsForFile) {
         QueryIDandResultsForFile = queryIDandResultsForFile;
+    }
+
+    /**
+     * Getter for the "QueryResultsForFile"
+     * @return
+     */
+    public ArrayList<String> getQueryResultsForFile() {
+        return QueryResultsForFile;
+    }
+
+    /**
+     * Setter for the "QueryResultsForFile"
+     * @param queryResultsForFile
+     */
+    public void setQueryResultsForFile(ArrayList<String> queryResultsForFile) {
+        QueryResultsForFile = queryResultsForFile;
     }
 
 
@@ -673,6 +689,10 @@ public class Searcher {
             String key = (String) pair.getKey();
             String queryString = (String) pair.getValue();
             ArrayList<String> temp = pasreQuery(queryString);
+            //add the queryResults to the queryResultsForFile
+            for (int i = 0; i < temp.size(); i++) {
+                QueryResultsForFile.add(temp.get(i));
+            }
 
 
             QueryIDandResultsForFile.put(key, temp);

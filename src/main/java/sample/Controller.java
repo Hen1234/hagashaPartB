@@ -157,6 +157,10 @@ public class Controller implements Initializable {
             LoadQueryFile.setDisable(false);
             RunQuery.setDisable(false);
 
+//            txt_fiedCorpus.setText("");
+//            txt_fiedPosting.setText("");
+
+
             //show the details message
             StringBuilder data = new StringBuilder("Number of Documents: ");
             data.append(reader.getIndexer().getDocuments().size());
@@ -412,6 +416,8 @@ public class Controller implements Initializable {
         ChooseResultPath.setDisable(false);
         //RunQueryFile.setDisable(false);
         LoadQueryFile.setDisable(false);
+        txt_fiedPosting.setText("");
+
         showAlert("Data Message", "Process Information", "Data loaded successfully!");
 
     }
@@ -535,6 +541,22 @@ public class Controller implements Initializable {
             }
         }
 
+                //init the docs for show entities
+        ArrayList<String> QueryResultsListForFile = searcher.getQueryResultsForFile();
+        ObservableList<String> QueryResultsListForFileObser = FXCollections.observableArrayList();
+
+        for (String key : QueryResultsListForFile) {
+            QueryResultsListForFileObser.add(key);
+        }
+
+        RelevantDocs.setItems(QueryResultsListForFileObser);
+        searcher.setQueryResultsForFile(new ArrayList<String>());
+
+        txt_fiedResultPath.setText("");
+        txt_fiedInsertQuery.setText("");
+        txt_fiedQueries.setText("");
+
+
 
         showAlert("Data Message", "Process Information", "QueriesFile run successfully!");
 
@@ -614,6 +636,10 @@ public class Controller implements Initializable {
 
         RelevantDocs.setItems(QueryResultsListObser);
         searcher.setQueryResults(new ArrayList<String>());
+
+        txt_fiedResultPath.setText("");
+        txt_fiedInsertQuery.setText("");
+        txt_fiedQueries.setText("");
 
 
     }
