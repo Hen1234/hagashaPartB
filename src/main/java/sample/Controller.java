@@ -412,6 +412,7 @@ public class Controller implements Initializable {
         ChooseResultPath.setDisable(false);
         //RunQueryFile.setDisable(false);
         LoadQueryFile.setDisable(false);
+        showAlert("Data Message", "Process Information", "Data loaded successfully!");
 
     }
 
