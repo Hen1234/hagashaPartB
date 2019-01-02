@@ -9,6 +9,9 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeMap;
 
+/**
+ * The class represents the controller of the QueryiesResultsForFile
+ */
 public class QueryiesResultsForFileController {
 
     private ArrayList<String> QueryResultsForFileList;

@@ -8,6 +8,11 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Stream;
 
+/**
+ * The class is responsible of returning the results for the queries.
+ * it sends the query to the parser and return the relevant doc graduated,
+ * no more than 50 docs
+ */
 public class Searcher {
 
     Ranker ranker;
@@ -23,19 +28,21 @@ public class Searcher {
     static HashMap<String, QueryDoc> docRelevantForTheQuery;
     PriorityQueue<QueryDoc> RankedQueryDocs;
     private ArrayList<String> QueryResults;
-    private ArrayList<String> QueryResultsForFile;
+    //private ArrayList<String> QueryResultsForFile;
     HashSet<String> citiesFromFilter; //hashSet for cities if the user chose filter by city
     static double avdl;
     static int numOfDocumentsInCorpus;
     String resultPath;
 
-
+    /**
+     * Constructor- initialize the fields of the class
+     */
     public Searcher() {
 
         docRelevantForTheQuery = new HashMap<String, QueryDoc>();
         QueryResults = new ArrayList<>();
         QueryIDandResultsForFile = new TreeMap<>();
-        QueryResultsForFile = new ArrayList<>();
+        //QueryResultsForFile = new ArrayList<>();
         RankedQueryDocs = new PriorityQueue();
         ranker = new Ranker();
         //numOfDocumentsInCorpus = Documents.size();
@@ -45,30 +52,44 @@ public class Searcher {
 
     }
 
+    /**
+     * Setter for the resultPath from the user
+     * @param resultPath
+     */
     public void setResultPath(String resultPath) {
         this.resultPath = resultPath;
     }
 
+    /**
+     * Getter for the "QueryIDandResultsForFile"(results for the queries file)
+     * @return
+     */
     public TreeMap<String, ArrayList<String>> getQueryIDandResultsForFile() {
         return QueryIDandResultsForFile;
     }
 
+    /**
+     * Setter for the "QueryIDandResultsForFile"
+     * @param queryIDandResultsForFile
+     */
     public void setQueryIDandResultsForFile(TreeMap<String, ArrayList<String>> queryIDandResultsForFile) {
         QueryIDandResultsForFile = queryIDandResultsForFile;
     }
 
-    public ArrayList<String> getQueryResultsForFile() {
-        return QueryResultsForFile;
-    }
 
-    public void setQueryResultsForFile(ArrayList<String> queryResultsForFile) {
-        QueryResultsForFile = queryResultsForFile;
-    }
 
+    /**
+     * Setter for the query
+     * @param query
+     */
     public void setQuery(String query) {
         this.query = query;
     }
 
+    /**
+     * Setter for the "queryAfterParse"
+     * @param queryAfterParse
+     */
     public void setQueryAfterParse(String queryAfterParse) {
         this.queryAfterParse = queryAfterParse;
     }
@@ -83,33 +104,56 @@ public class Searcher {
 
     }
 
+    /**
+     * Setter for the "isSemantic"
+     * @param semantic
+     */
     public void setSemantic(boolean semantic) {
         isSemantic = semantic;
     }
 
+    /**
+     * Setter for the Dictionary
+     * @param dictionary
+     */
     public void setDictionary(TreeMap<String, String> dictionary) {
         Dictionary = dictionary;
     }
 
+    /**
+     * Setter fot the Documents
+     * @param documents
+     */
     public void setDocuments(HashMap<String, Docs> documents) {
         Documents = documents;
     }
 
+    /**
+     * Getter for the QueryResults
+     * @return
+     */
     public ArrayList<String> getQueryResults() {
         return QueryResults;
     }
 
+    /**
+     * Setter for the QueryResults
+     * @param queryResults
+     */
     public void setQueryResults(ArrayList<String> queryResults) {
         QueryResults = queryResults;
     }
 
     /**
-     * @param query
-     * @return
+     * The method sends the query to the parser, check semantics if the user selected
+     * then sends the relevant docs to the Ranker and returns the results
+     *
+     * @param query- query from user
+     * @return- ArrayList of results of the query
      * @throws IOException
      */
     public ArrayList<String> pasreQuery(String query) throws IOException {
-        System.out.println("Query: " + query);
+
         //init the Documents and Dictionary HashMap from the index
         Documents = Indexer.docsHashMap;
         Dictionary = Indexer.sorted;
@@ -185,6 +229,10 @@ public class Searcher {
 
     }
 
+    /**
+     * The method gets a QueryDoc and check if one of the QueryTerms exists it's header
+     * @param current- current QueryDoc
+     */
     private void addDocsRelevantFromHeaders(QueryTerm current) {
         Stemmer stem = new Stemmer();
         HashSet<String> temp;
@@ -210,27 +258,19 @@ public class Searcher {
         }
     }
 
-
+    /**
+     * The method poll the 50 most rnked docs from the priorityQueue got from the Ranker
+     * @return
+     * @throws IOException
+     */
     private ArrayList<String> poll50MostRankedDocs() throws IOException {
 
         //poll the 50 most ranked docs from the qDocQueue
         String folderName = ReadFile.postingPath;
-        /*if (ReadFile.toStem) {
-            folderName = folderName + "\\" + "WithStemming";
-        } else {
-            folderName = folderName + "\\" + "WithoutStemming";
-        }*/
-       /* File f = new File(folderName + "\\" + "result.txt");
-        FileOutputStream fos = new FileOutputStream(f.getPath());
-        OutputStreamWriter osr = new OutputStreamWriter(fos);
-        BufferedWriter bw = new BufferedWriter(osr);*/
 
         int b = 0;
         while (!ranker.getqDocQueue().isEmpty() && b < 50) {
             QueryDoc currentQueryDocFromQueue = (QueryDoc) ranker.getqDocQueue().poll();
-            /*String s = "351 0 " + currentQueryDocFromQueue.docNO + " " + " 1 42.38 mt" + System.lineSeparator();
-            bw.write(s);
-            bw.flush();*/
             QueryResults.add(currentQueryDocFromQueue.docNO);
             currentQueryDocFromQueue.setRank(0);
             b++;
@@ -250,14 +290,14 @@ public class Searcher {
 
     }
 
+    /**
+     * The method sends the ranker the relevant docs fot the query
+     * @throws IOException
+     */
     private void sendToRanker() throws IOException {
 
         String folderName = ReadFile.postingPath;
-        /*if (ReadFile.toStem) {
-            folderName = folderName + "\\" + "WithStemming";
-        } else {
-            folderName = folderName + "\\" + "WithoutStemming";
-        }*/
+
         File f = new File(folderName + "\\" + "result.txt");
         FileOutputStream fos = new FileOutputStream(f.getPath());
         OutputStreamWriter osr = new OutputStreamWriter(fos);
@@ -272,7 +312,13 @@ public class Searcher {
         }
     }
 
-
+    /**
+     * The method init every term to QueryTerm and every doc to QueryDoc
+     * it takes the information from the relevant line from the posting file
+     * @param StringcurretTermOfQuery
+     * @param isSynonym
+     * @return
+     */
     private QueryTerm initQueryTermAndQueryDocs(String StringcurretTermOfQuery, boolean isSynonym) {
 
         QueryTerm currentQueryTerm = null;
@@ -317,7 +363,7 @@ public class Searcher {
             String[] numOfFileAndLineOfTerm = pointer.split(",");
             String fileNum = numOfFileAndLineOfTerm[0];
             String lineNum = numOfFileAndLineOfTerm[1];
-            Integer lineNumInt = Integer.parseInt(lineNum) - 1;
+            Integer lineNumInt = Integer.parseInt(lineNum)-1;
             String lineFromFile = "";
             try {
                 //doc:FBIS3-29#2=27066 ,27079 doc:FBIS3-5232#1=481 DF- 2 TIC- 3
@@ -325,8 +371,7 @@ public class Searcher {
             } catch (Exception e) {
             }
 
-            //ArrayList<String> docs = new ArrayList<>();
-            //ArrayList<Integer> amountsPerDoc = new ArrayList<>();
+
             String docNo = "";
             String tfString = "";
             String locations = "";
@@ -355,10 +400,6 @@ public class Searcher {
 
                     //find location in the doc
                     k++;
-                    while (k > lineFromFile.length() - 1 && lineFromFile.charAt(k) != 'd') {
-                        locations = locations + lineFromFile.charAt(k);
-                        k++;
-                    }
 
                     String[] locations1 = locations.split(" ");
                     for (int i = 0; i < locations1.length; i++) {
@@ -399,12 +440,6 @@ public class Searcher {
                                     }
 
                                     newQueryDoc.setLength(docFromOriginalDocs.getDocLength());
-                                    //update the locations
-                                    ArrayList<String> locat = newQueryDoc.getLocations();
-                                    for (int i = 0; i < locations1.length; i++) {
-                                        locat.add(locations1[i]);
-
-                                    }
                                     //add the QueryTerm to the relevant doc
                                     newQueryDoc.getQueryTermsInDocsAndQuery().put(currentQueryTerm.getValue(), currentQueryTerm);
                                     //add the new QueryDoc to the HashSet of the relevant docs for the query
@@ -462,7 +497,7 @@ public class Searcher {
             }
             //update df
             for (int j = lineFromFile.length() - 1; j < lineFromFile.length(); j--) {
-                if (lineFromFile.charAt(j) == 'D' && j + 5 < lineFromFile.length() &&
+                if (lineFromFile.length()>0 && lineFromFile.charAt(j) == 'D' && j + 5 < lineFromFile.length() &&
                         lineFromFile.charAt(j + 1) == 'F' && lineFromFile.charAt(j + 2) == '-' &&
                         lineFromFile.charAt(j + 3) == ' ') {
                     String df = "";
@@ -499,33 +534,19 @@ public class Searcher {
 
     }
 
+    /**
+     * The method init the value of the avdl
+     */
     private void initAvdl() {
         Integer countDocsLength = 0;
         Iterator it = Documents.entrySet().iterator();
         while (it.hasNext()) {
-            //Terms nextTerm = (Terms) it.next();
-            //text.append(nextTerm.getValue());
             Map.Entry pair = (Map.Entry) it.next();
             countDocsLength = countDocsLength + ((Docs) pair.getValue()).getDocLength();
         }
         avdl = countDocsLength / Documents.size();
     }
 
-//    private void loadDocuments() {
-//
-//        try {
-//
-//            FileInputStream f = new FileInputStream(new File(Indexer.pathDir + "\\" + "DocsAsObject.txt"));
-//
-//            ObjectInputStream o = new ObjectInputStream(f);
-//            Documents = (HashMap<String, Docs>) o.readUnshared();
-//            o.close();
-//
-//        } catch (Exception e) {
-//        }
-//
-//
-//    }
 
     /**
      * The method update the query with the synonym words
@@ -559,12 +580,17 @@ public class Searcher {
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+
         }
     }
 
-
-    public HashMap<String, String> readQueriesFile(String path) throws IOException {
+    /**
+     * The method read and parse the queries file got from the user
+     * @param path
+     * @return
+     * @throws IOException
+     */
+    public HashMap<String, String> readQueriesFile(String path) throws Exception {
         int k = 0;
         HashMap<String, String> ans = new HashMap<>();
         String queryNum = "";
@@ -630,35 +656,6 @@ public class Searcher {
             while (query != null && query.length() > 0 && query.charAt(query.length() - 1) == ' ') {
                 query = query.substring(0, query.length() - 1);
             }
-//description
-//            line = br.readLine();
-//            if(line.equals("")){
-//                line = br.readLine();
-//            }
-//            if(line.charAt(0)== '<') {
-//                for (int i = 1; i < line.length(); i++) {
-//                    if (line.charAt(i) == 'd' && i + 1 < line.length() && line.charAt(i + 1) == 'e' &&
-//                            i + 2 < line.length() && line.charAt(i + 2) == 's' && i + 3 < line.length() && line.charAt(i + 3) == 'c') {
-//                        line = br.readLine();
-//
-//                        query = query + " " + line;
-//                        break;
-//
-//                    }
-//
-//                }
-//
-//
-//            }
-//            line = br.readLine();
-//            while(line!=null &&!(line.equals(""))){
-//                if(!(line.charAt(0)=='<')){
-//                    query = query + " " + line;
-//                    line = br.readLine();
-//                }
-//               break;
-//
-//            }
 
             ans.put(queryNum, query);
             queryNum = "";
@@ -669,7 +666,7 @@ public class Searcher {
         codesAndQueries = ans;
 
         Iterator it = codesAndQueries.entrySet().iterator();
-        //init thre TreeMap of queriesResults
+        //init the TreeMap of queriesResults
         QueryIDandResultsForFile = new TreeMap<>();
         while (it.hasNext()) {
             Map.Entry pair = (Map.Entry) it.next();
@@ -677,16 +674,12 @@ public class Searcher {
             String queryString = (String) pair.getValue();
             ArrayList<String> temp = pasreQuery(queryString);
 
-            //add the queryResults to the queryResultsForFile
-            for (int i = 0; i < temp.size(); i++) {
-                QueryResultsForFile.add(temp.get(i));
-            }
 
             QueryIDandResultsForFile.put(key, temp);
             QueryResults = new ArrayList<>();
         }
 
-        //File res = new File(ReadFile.postingPath + "\\" + "result.txt");
+
         File res = new File(resultPath + "\\result.txt");
         FileOutputStream fos = new FileOutputStream(res.getPath());
         OutputStreamWriter osr = new OutputStreamWriter(fos);
@@ -697,11 +690,10 @@ public class Searcher {
             Map.Entry pair = (Map.Entry) iter.next();
             String key = (String) pair.getKey();
             ArrayList<String> queryString = (ArrayList<String>) pair.getValue();
-            //ArrayList<String> temp = pasreQuery(queryString);
+
             for (int i = 0; i < queryString.size(); i++) {
                 s.append(key + " 0 " + queryString.get(i) + " " + " 1 42.38 mt" + System.lineSeparator());
-                /*bw.write(s);
-                bw.flush();*/
+
             }
             QueryResults = new ArrayList<>();
         }
@@ -714,6 +706,11 @@ public class Searcher {
         return codesAndQueries;
     }
 
+    /**
+     * The method checks if the given string contains a dash
+     * @param str
+     * @return
+     */
     // is the given string contain '-'
     private boolean isContainDash(String str) {
         for (int i = 0; i < str.length(); i++)

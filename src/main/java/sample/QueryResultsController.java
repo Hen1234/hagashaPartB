@@ -17,6 +17,9 @@ import javafx.scene.control.Button;
 import java.awt.*;
 import java.util.ArrayList;
 
+/**
+ * The class represents the controller of the results of the query
+ */
 public class QueryResultsController {
 
     private ArrayList<String> QueryResultsList;

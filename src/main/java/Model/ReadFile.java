@@ -191,7 +191,7 @@ public class ReadFile implements Serializable {
      *
      * @throws IOException
      */
-    public void ReadJsoup() throws Exception {
+    public void ReadJsoup() throws Exception  {
         p.insertStopWords(corpusPath + "\\stop_words.txt");
         String folderName;
         //create a new folder for stemming/not stemming
@@ -214,11 +214,11 @@ public class ReadFile implements Serializable {
 
         File resource = new File(corpusPath);
         File[] Directories = resource.listFiles();
-        for (File dir : Directories) {
-            if (dir.getName().equals("stop_words.txt"))
-                continue;
-            files = dir.listFiles();
-
+            for (File dir : Directories) {
+                if (dir.getName().equals("stop_words.txt"))
+                    continue;
+                files = dir.listFiles();
+            }
             for (File f : files) {
                 System.out.println("file name: "+f.getName());
                 ReadFile.countFiles++;
@@ -296,8 +296,6 @@ public class ReadFile implements Serializable {
 
 
             }
-
-        }
 
         try {
             indexer.merge();

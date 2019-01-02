@@ -2,6 +2,7 @@ package sample;
 
 import Model.*;
 import com.sun.scenario.effect.impl.sw.sse.SSEBlend_SRC_OUTPeer;
+import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -35,6 +36,7 @@ public class Controller implements Initializable {
 
     static ReadFile reader;
     static Searcher searcher;
+
     //bring from disc to memory
     public TreeMap<String, String> Dictionary;
     public HashMap<String, Docs> Documents;
@@ -42,7 +44,7 @@ public class Controller implements Initializable {
     HashMap<String, City> CitiesHashMap;
     HashSet<String> LanguagesHashSet;
     public ArrayList<String> citiesList;
-    //public Stage stage;
+
     @FXML
     public boolean corpusPathIsNull;
     public boolean postingPathIsNull;
@@ -68,8 +70,7 @@ public class Controller implements Initializable {
     public ComboBox Languages;
     public ChoiceBox RelevantDocs;
     public Alert badPathAlert;
-    //public ComboBox Cities;
-    //public CheckComboBox Cities;
+    public Alert validCorpusAlert;
     public Label labelEntities;
     public String FirstPath;
     public String SecondPath;
@@ -87,13 +88,13 @@ public class Controller implements Initializable {
 
         try {
             reader = new ReadFile();
-        } catch (Exception e) {
-        }
+        } catch (Exception e){}
         FirstPath = "";
         SecondPath = "";
         corpusPathIsNull = true;
         postingPathIsNull = true;
         badPathAlert = new Alert(Alert.AlertType.ERROR, "Please insert Valid path", ButtonType.OK);
+        validCorpusAlert = new Alert(Alert.AlertType.ERROR, "Please insert Valid Corpus path", ButtonType.OK);
         searcher = new Searcher();
         Stemming.setSelected(false);
         reset.setDisable(true);
@@ -132,13 +133,10 @@ public class Controller implements Initializable {
                 reader.setPostingPath(txt_fiedPosting.getText());
                 reader.ReadJsoup();
             } catch (Exception e) {
-                e.printStackTrace();
+                validCorpusAlert.show();
+                return;
             }
-            /*if (FirstPath.equals(""))
-                FirstPath = txt_fiedPosting.getText();
-            else {
-                SecondPath = txt_fiedPosting.getText();
-            }*/
+
             //init the Languages
             HashSet<String> languages = reader.getLanguages();
             Languages.setItems(FXCollections.observableArrayList(languages));
@@ -149,10 +147,7 @@ public class Controller implements Initializable {
             ShowDictionary.setDisable(false);
             LoadDictionary.setDisable(false);
             ChooseResultPath.setDisable(false);
-            //init the cities
-            HashMap<String, City> cities = reader.getCities();
-//            Cities.getItems().addAll(citiesObservableList(cities));
-//            Cities.setDisable(false);
+
             citiesCombo();
 
             //init documents
@@ -277,7 +272,6 @@ public class Controller implements Initializable {
         File queriesFromUser = dir.showOpenDialog(stage);
         if (queriesFromUser != null) {
             txt_fiedQueries.setText(queriesFromUser.getPath());
-            System.out.println(txt_fiedQueries);
             if (!txt_fiedResultPath.getText().equals(""))
                 RunQueryFile.setDisable(false);
         }
@@ -337,9 +331,7 @@ public class Controller implements Initializable {
     public void showDictionary(ActionEvent event) {
 
         try {
-            /*if (reader.getIndexer().getSorted() == null || reader.getIndexer().getSorted().size() == 0) {
-                loadDictionary();
-            }*/
+
             Stage stage = new Stage();
             stage.setTitle("Dictionary");
             Parent root = FXMLLoader.load(getClass().getClassLoader().getResource("ShowDic.fxml"));
@@ -362,7 +354,6 @@ public class Controller implements Initializable {
     public void loadDictionary() throws IOException, ClassNotFoundException {
 
         String postpath = pathFromUser;
-        //String postpath = reader.getPostingPath();
         FileInputStream f = null;
         try {
             f = new FileInputStream(new File(postpath + "\\" + "SortedAsObject.txt"));
@@ -424,10 +415,14 @@ public class Controller implements Initializable {
 
     }
 
+    /**
+     * The method loads the languages to the memory
+     * @throws IOException
+     * @throws ClassNotFoundException
+     */
     private void loadLanguages() throws IOException, ClassNotFoundException {
 
         String postpath = pathFromUser;
-        //String postpath = reader.getPostingPath();
         FileInputStream f = null;
         f = new FileInputStream(new File(postpath + "\\" + "LanguagesAsObject.txt"));
         ObjectInputStream o = new ObjectInputStream(f);
@@ -442,65 +437,63 @@ public class Controller implements Initializable {
 
     }
 
+    /**
+     * The method loads the cities to the memory
+     * @throws IOException
+     */
     private void loadCities() throws IOException {
 
         String postpath = pathFromUser;
-        /*if (Stemming.isSelected()) {
-            postpath = pathFromUser + "\\WithStemming";
-        } else {
-            postpath = pathFromUser + "\\WithoutStemming";
-        }*/
         byte[] encode = Files.readAllBytes(Paths.get(postpath + File.separator + "CitiesAsObject.txt"));
         byte[] output = Base64.getMimeDecoder().decode(encode);
         Object out = SerializationUtils.deserialize(output);
         CitiesHashMap = ((HashMap<String, City>) out);
-        //searcher.setDocuments(Documents);
+
         reader.setCities(CitiesHashMap);
 
-        //init the cities
-//        comboBoxCities.getItems().addAll(citiesObservableList(CitiesHashMap));
-//        comboBoxCities.setDisable(false);
         citiesCombo();
 
 
     }
 
+    /**
+     * The method loads the DicToShow to the memory
+     * @throws IOException
+     * @throws ClassNotFoundException
+     */
     public void loadDicToShow() throws IOException, ClassNotFoundException {
 
         String postpath = pathFromUser;
-        //String postpath = reader.getPostingPath();
         FileInputStream f = null;
         f = new FileInputStream(new File(postpath + "\\" + "DicToShowAsObject.txt"));
         ObjectInputStream o = new ObjectInputStream(f);
         DicToShow = (ArrayList<String>) o.readObject();
         reader.getIndexer().setDicToShow(DicToShow);
-        //searcher.setDictionary(Dictionary);
         o.close();
 
     }
 
+    /**
+     * The method loads the documents to the memory
+     * @throws IOException
+     */
     private void loadDocuments() throws IOException {
         String postpath = pathFromUser;
-        /*if (Stemming.isSelected()) {
-            postpath = pathFromUser + "\\WithStemming";
-        } else {
-            postpath = pathFromUser + "\\WithoutStemming";
-        }*/
+
         byte[] encode = Files.readAllBytes(Paths.get(postpath + File.separator + "DocsAsObject.txt"));
         byte[] output = Base64.getMimeDecoder().decode(encode);
         Object out = SerializationUtils.deserialize(output);
         Documents = ((HashMap<String, Docs>) out);
-        //searcher.setDocuments(Documents);
+
         reader.getIndexer().setDocsHashMap(Documents);
     }
 
+    /**
+     * The method loads the headers to the memory
+     * @throws IOException
+     */
     private void loadHeaders() throws IOException {
         String postpath = pathFromUser;
-        /*if (Stemming.isSelected()) {
-            postpath = pathFromUser + "\\WithStemming";
-        } else {
-            postpath = pathFromUser + "\\WithoutStemming";
-        }*/
 
         byte[] encode = Files.readAllBytes(Paths.get(postpath + File.separator + "TermsInHeaderAsObject.txt"));
         byte[] output = Base64.getMimeDecoder().decode(encode);
@@ -509,47 +502,47 @@ public class Controller implements Initializable {
         reader.getP().setTermsInHeaderToDoc(temp);
     }
 
-
+    /**
+     * The method runs get the path of the queries file from the user
+     * @param event
+     * @throws IOException
+     */
     public void runQueriesPath(ActionEvent event) throws IOException {
         String queriesFromUser = txt_fiedQueries.getText();
         if (queriesFromUser != null) {
-            System.out.println(txt_fiedQueries);
             try {
-                if (!FilterByCity.isSelected()){
+                if (!FilterByCity.isSelected()) {
                     searcher.setCities(null);
+
+               }
+                if (Stemming.isSelected()) {
+                    reader.setStemming(true);
+                } else {
+                    reader.setStemming(false);
+                }
+                if(!isSemantic.isSelected()){
+                    searcher.setSemantic(false);
+                }else{
+                    searcher.setSemantic(true);
                 }
                 searcher.readQueriesFile(queriesFromUser);
             } catch (Exception e) {
-                e.printStackTrace();
-               badPathAlert.setContentText("Please choose a valid path for queries file");
-               badPathAlert.show();
-               badPathAlert.setContentText("Please insert Valid path");
-               return;
+                badPathAlert.setContentText("Please choose a valid path for queries file");
+                badPathAlert.show();
+                badPathAlert.setContentText("Please insert Valid path");
+                return;
             }
         }
 
-        //new stage for the list of the ranked doc
-        Stage stage = new Stage();
-        stage.setTitle("Results");
-        Parent root = FXMLLoader.load(getClass().getClassLoader().getResource("ShowQueryiesResultsForFile.fxml"));
-        Scene scene = new Scene(root, 500, 400);
-        stage.setScene(scene);
-        stage.initModality(Modality.APPLICATION_MODAL);
-        stage.show();
 
-        //init the docs for show entities
-        ArrayList<String> QueryResultsListForFile = searcher.getQueryResultsForFile();
-        ObservableList<String> QueryResultsListForFileObser = FXCollections.observableArrayList();
+        showAlert("Data Message", "Process Information", "QueriesFile run successfully!");
 
-        for (String key : QueryResultsListForFile) {
-            QueryResultsListForFileObser.add(key);
-        }
-
-        RelevantDocs.setItems(QueryResultsListForFileObser);
-        searcher.setQueryResultsForFile(new ArrayList<String>());
     }
 
-    public void FilterByCity(ActionEvent event) {
+    /**
+     * The method checks if the user selected filter by city and set the cities in the searcher
+     */
+    public void FilterByCity() {
 
         if (FilterByCity.isSelected()) {
             HashSet<String> citiesHashSet = new HashSet<>();
@@ -563,50 +556,39 @@ public class Controller implements Initializable {
             searcher.setCities(citiesHashSet);
         }
 
-
-//        if (FilterByCity.isSelected()) {
-//            //ObservableList<
-//            ObservableList<String> list = Cities.getCheckModel().getCheckedItems();
-//            citiesFromFilter(list);
-//        }/* else {
-
-        //   }
     }
 
-
-    private ObservableList<String> citiesObservableList(HashMap<String, City> cities) {
-        //ConcurrentHashMap<String, City> map = cities;
-        ObservableList<String> citiesObservableList = FXCollections.observableArrayList();
-
-        for (String key : cities.keySet()) {
-            citiesObservableList.add(key);
-        }
-        return citiesObservableList;
-    }
-
-    private void citiesFromFilter(ObservableList<String> list) {
-
-        HashSet<String> citiesHashSet = new HashSet<>();
-        for (String key : list) {
-            citiesHashSet.add(key);
-        }
-
-        searcher.setCities(citiesHashSet);
-    }
-
+    /**
+     * The method gets one query from the user and sends it to the Searcher
+     * @throws IOException
+     */
     public void getQueryFromUser() throws IOException {
 
         String query = txt_fiedInsertQuery.getText();
         if (query == null || query.equals("") || query.equals(" ")) {
-
+            showAlert("Message", "Error", "Please insert a valid query");
+            return;
         }
 
         try {
-            if (!FilterByCity.isSelected()){
+            if (!FilterByCity.isSelected()) {
                 searcher.setCities(null);
+
+            }
+            if (Stemming.isSelected()) {
+                reader.setStemming(true);
+            } else {
+                reader.setStemming(false);
+            }
+            if(!isSemantic.isSelected()){
+                searcher.setSemantic(false);
+            }else{
+                searcher.setSemantic(true);
             }
             searcher.pasreQuery(query);
         } catch (Exception e) {
+
+
             badPathAlert.setContentText("Please insert query for search");
             badPathAlert.show();
             badPathAlert.setContentText("Please insert Valid path");
@@ -635,6 +617,9 @@ public class Controller implements Initializable {
 
     }
 
+    /**
+     * The method checks if the user selected "semantic"
+     */
     public void isSemantic() {
 
         if (isSemantic.isSelected()) {
@@ -644,6 +629,9 @@ public class Controller implements Initializable {
 
     }
 
+    /**
+     * The method shows the entities of the doc
+     */
     public void showEntities() {
 
 
@@ -666,20 +654,29 @@ public class Controller implements Initializable {
 
     }
 
+    /**
+     * The method initialize the citiesComboBox
+     */
     private void citiesCombo() {
 
-        citiesList = new ArrayList<>();
-        for (String s : CitiesHashMap.keySet()) {
+        try{
 
-            citiesList.add(s);
-        }
+            CitiesHashMap = reader.getCities();
+            citiesList = new ArrayList<>();
+            for (String s : CitiesHashMap.keySet()) {
 
-        ObservableList<String> citiesObserv = FXCollections.observableArrayList(citiesList);
-        for (String s1 : citiesObserv) {
-            CheckMenuItem x = new CheckMenuItem();
-            x.setText(s1);
-            menu.getItems().add(x);
-        }
+                citiesList.add(s);
+            }
+
+            ObservableList<String> citiesObserv = FXCollections.observableArrayList(citiesList);
+            for (String s1 : citiesObserv) {
+                CheckMenuItem x = new CheckMenuItem();
+                x.setText(s1);
+                menu.getItems().add(x);
+            }
+
+        }catch (Exception e){}
+
 
     }
 
