@@ -21,6 +21,11 @@ public class Searcher {
     String queryAfterParse;
     boolean isSemantic;
 
+
+    private boolean isFile;
+
+
+
     HashMap<String, String> codesAndQueries;
     private TreeMap<String, ArrayList<String>> QueryIDandResultsForFile;  //TreeMap: key->queryID, value->queryResults
     public TreeMap<String, String> Dictionary;
@@ -49,7 +54,16 @@ public class Searcher {
         citiesFromFilter = null;
         Documents = Indexer.docsHashMap;
         Dictionary = Indexer.sorted;
+        isFile = false;
 
+    }
+
+    public boolean isFile() {
+        return isFile;
+    }
+
+    public void setFile(boolean file) {
+        isFile = file;
     }
 
     /**
@@ -296,6 +310,22 @@ public class Searcher {
         while (!ranker.getqDocQueue().isEmpty()) {
             QueryDoc currentQueryDocFromQueue = (QueryDoc) ranker.getqDocQueue().poll();
             currentQueryDocFromQueue.setRank(0);
+        }
+        if (!isFile){
+            File res = new File(resultPath + "\\result.txt");
+            FileOutputStream fos = new FileOutputStream(res.getPath());
+            OutputStreamWriter osr = new OutputStreamWriter(fos);
+            BufferedWriter bw = new BufferedWriter(osr);
+            StringBuilder s = new StringBuilder("");
+            for (int i = 0; i <QueryResults.size() ; i++) {
+                    s.append("365" + " 0 " + QueryResults.get(i) + " " + " 1 42.38 mt" + System.lineSeparator());
+            }
+            QueryResults = new ArrayList<>();
+            bw.write(s.toString());
+            bw.flush();
+            osr.close();
+            fos.close();
+            bw.close();
         }
         //init the HashMap of the relevantDoc
         docRelevantForTheQuery = new HashMap<>();

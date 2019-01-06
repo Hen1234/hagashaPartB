@@ -532,6 +532,7 @@ public class Controller implements Initializable {
                 }else{
                     searcher.setSemantic(true);
                 }
+                searcher.setFile(true);
                 searcher.readQueriesFile(queriesFromUser);
             } catch (Exception e) {
                 badPathAlert.setContentText("Please choose a valid path for queries file");
